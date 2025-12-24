@@ -2,6 +2,23 @@
 
 A Claude code hook that reads interactions between the user and AI agent, learns the user's communication style and preferences using an OpenAI-compatible LLM, and maintains a personalized `CLAUDE.md` file.
 
+## Architecture
+
+```
+User ←→ Claude Agent
+         ↓
+    [Interaction]
+         ↓
+  ClaudeMemoryHook
+         ↓
+    ┌────┴────┐
+    ↓         ↓
+StyleAnalyzer  ClaudeFileManager
+    ↓              ↓
+OpenAI API    CLAUDE.md
+(analyzes)    (stores preferences)
+```
+
 ## Features
 
 - 🎯 **Interaction Analysis**: Automatically analyzes user-agent conversations to extract insights
