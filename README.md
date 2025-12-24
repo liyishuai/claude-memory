@@ -91,7 +91,9 @@ const hook = createHook({
 
 ## Example Output
 
-After processing interactions, `CLAUDE.md` will contain structured preferences:
+After processing interactions, `CLAUDE.md` will contain structured preferences like this:
+
+(See `CLAUDE.md.example` for a complete example)
 
 ```markdown
 # User Preferences and Style
@@ -188,6 +190,29 @@ npm test
 
 ```bash
 npm run lint
+```
+
+## Integration with Claude
+
+This hook is designed to work with Claude AI assistants by:
+
+1. **Capturing Conversations**: After each interaction between user and Claude, call `processInteraction()` with the conversation history
+2. **Learning Over Time**: The LLM analyzes patterns across multiple interactions to build a comprehensive preference profile
+3. **Updating Memory**: The `CLAUDE.md` file is maintained as a living document that Claude can reference in future conversations
+
+### Typical Integration Flow
+
+```typescript
+// After each Claude conversation:
+const interaction = {
+  messages: conversationHistory,
+};
+
+await hook.processInteraction(interaction);
+
+// Claude can then read CLAUDE.md to understand user preferences
+const preferences = await hook.getCurrentPreferences();
+// Include preferences in Claude's system prompt or context
 ```
 
 ## Use Cases
