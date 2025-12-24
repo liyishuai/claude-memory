@@ -2,6 +2,23 @@ import OpenAI from 'openai';
 import { Interaction, UserPreferences, ClaudeMemoryConfig } from './types';
 
 /**
+ * Default analysis prompt template
+ */
+const DEFAULT_ANALYSIS_PROMPT = (conversationText: string) => `Analyze the following conversation between a user and an AI assistant. 
+Extract insights about the user's:
+1. Communication style (formal, casual, technical, etc.)
+2. Topic preferences and interests
+3. Technical expertise level
+4. Preferred response format (concise, detailed, with examples, etc.)
+5. Language style and tone preferences
+6. Any other notable patterns or preferences
+
+Conversation:
+${conversationText}
+
+Provide your analysis in a structured format with clear sections. Be specific and cite examples from the conversation when possible.`;
+
+/**
  * Analyzes user interactions using an OpenAI-compatible LLM to learn preferences
  */
 export class StyleAnalyzer {
@@ -26,19 +43,7 @@ export class StyleAnalyzer {
       .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
       .join('\n\n');
 
-    const analysisPrompt = `Analyze the following conversation between a user and an AI assistant. 
-Extract insights about the user's:
-1. Communication style (formal, casual, technical, etc.)
-2. Topic preferences and interests
-3. Technical expertise level
-4. Preferred response format (concise, detailed, with examples, etc.)
-5. Language style and tone preferences
-6. Any other notable patterns or preferences
-
-Conversation:
-${conversationText}
-
-Provide your analysis in a structured format with clear sections. Be specific and cite examples from the conversation when possible.`;
+    const analysisPrompt = DEFAULT_ANALYSIS_PROMPT(conversationText);
 
     try {
       const response = await this.client.chat.completions.create({
@@ -93,9 +98,9 @@ Provide your analysis in a structured format with clear sections. Be specific an
         currentSection = 'formatPreferences';
       } else if (trimmed.toLowerCase().includes('language') && trimmed.toLowerCase().includes('style')) {
         currentSection = 'languageStyle';
-      } else if (trimmed.match(/^[-*\d.]/)) {
-        // Bullet point or numbered item
-        const content = trimmed.replace(/^[-*\d.]\s*/, '');
+      } else if (/^[-*]\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed)) {
+        // Bullet point (- or *) or numbered item (1. 2. etc.)
+        const content = trimmed.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, '');
         if (currentSection === 'topicPreferences') {
           if (!preferences.topicPreferences) preferences.topicPreferences = [];
           preferences.topicPreferences.push(content);
@@ -136,7 +141,15 @@ Provide your analysis in a structured format with clear sections. Be specific an
     }
 
     // If parsing didn't extract much structure, store the whole analysis
-    if (!preferences.communicationStyle && !preferences.technicalLevel && analysisText.length > 0) {
+    const hasStructuredData = Boolean(
+      preferences.communicationStyle || 
+      preferences.technicalLevel || 
+      preferences.formatPreferences ||
+      preferences.languageStyle ||
+      (preferences.topicPreferences && preferences.topicPreferences.length > 0)
+    );
+    
+    if (!hasStructuredData && analysisText.length > 0) {
       preferences.otherInsights = [analysisText];
     }
 

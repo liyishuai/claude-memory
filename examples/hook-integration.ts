@@ -10,11 +10,20 @@ import { createHook, Interaction, Message } from '../src';
 // Simulated chat session
 class ChatSession {
   private messages: Message[] = [];
-  private hook = createHook({
-    apiKey: process.env.OPENAI_API_KEY || '',
-    model: 'gpt-3.5-turbo',
-    claudeFilePath: './CLAUDE.md',
-  });
+  private hook;
+
+  constructor() {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY environment variable is required');
+    }
+
+    this.hook = createHook({
+      apiKey,
+      model: 'gpt-3.5-turbo',
+      claudeFilePath: './CLAUDE.md',
+    });
+  }
 
   async addMessage(role: 'user' | 'assistant', content: string) {
     const message: Message = {

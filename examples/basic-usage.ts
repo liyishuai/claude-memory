@@ -10,9 +10,17 @@
 import { createHook, Interaction } from '../src';
 
 async function main() {
+  // Ensure API key is provided
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.error('Error: OPENAI_API_KEY environment variable is required');
+    console.error('Usage: export OPENAI_API_KEY=your-api-key-here');
+    process.exit(1);
+  }
+
   // Create the hook with configuration
   const hook = createHook({
-    apiKey: process.env.OPENAI_API_KEY || '',
+    apiKey,
     model: 'gpt-3.5-turbo',
     claudeFilePath: './CLAUDE.md',
     maxMessages: 20,

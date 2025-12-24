@@ -20,7 +20,7 @@ export class ClaudeFileManager {
       return await fs.readFile(this.filePath, 'utf-8');
     } catch (error) {
       // File doesn't exist yet, return empty string
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
         return '';
       }
       throw error;
